@@ -4,8 +4,9 @@ const watch = require('gulp-watch');
 const plumber = require('gulp-plumber');
 const rollup = require('gulp-rollup');
 const replace = require('@rollup/plugin-replace');
+const uglify = require('gulp-uglify');
 const entry = './src/**/*.js';
-const clearEntry = './src/server/config/index.js'; //流清洗文件路径
+const clearEntry = './src/middlewares/ErrHandler.js'; //流清洗文件路径
 //开发环境任务
 function buildDev() {
     return watch(entry, {
@@ -29,6 +30,7 @@ function buildProd() {
             ignore: [clearEntry],//忽略某个文件
             "plugins": ["@babel/plugin-transform-modules-commonjs"]
         }))
+        .pipe(uglify())
         .pipe(gulp.dest('./dist'));
 }
 
@@ -36,6 +38,7 @@ function buildProd() {
 
 function buildConfig() {
     //treeshaking 摇树优化旨在消除项目中的多余代码，最早是在gulp-rollup中的思想，后webpack借鉴至自己
+    var caches = {};
     return gulp.src(entry)
         .pipe(rollup({
             input: clearEntry,
@@ -45,11 +48,10 @@ function buildConfig() {
             plugins: [
                 replace({
                     'process.env.NODE_ENV': JSON.stringify('production'),
-                    //   __buildDate__: () => JSON.stringify(new Date()),
-                    //   __buildVersion: 15
                 })
             ]
         }))
+        .pipe(uglify())
         .pipe(gulp.dest('./dist'));
 }
 
